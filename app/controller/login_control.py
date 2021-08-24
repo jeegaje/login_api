@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from models.user_model import *
+from ..models.user_model import *
 from flask_jwt_extended import create_access_token
 
 def login():
@@ -10,6 +10,7 @@ def login():
         data = {
             "massage" : "Periksa email dan password!"
         }
+        return jsonify(data), 403
     else:
         data = {
             "user":{
@@ -19,7 +20,7 @@ def login():
         }
         token = create_access_token(data)
         data['token'] = token
-    return jsonify(data)
+        return jsonify(data)
 
 def user():
     result =  session.query(User).all()
@@ -32,3 +33,15 @@ def user():
             }
         user.append(data)
     return jsonify(user)
+
+def register():
+    #data = request.json
+    firstName = request.json.get('fname')
+    lastName = request.json.get('lname')
+    email = request.json.get('email')
+    password = request.json.get('password')
+    session.add(User(user_email=email, user_password=password, firstName=firstName, lastName=lastName))
+    #session.add(User(**data))
+    session.commit()
+    return jsonify({"massage":"user sudah ditambah"})
+    #return jsonify(data)

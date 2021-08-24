@@ -17,3 +17,5 @@ class User(Base):
    user_id = Column(Integer, primary_key =  True)
    user_email = Column(String)
    user_password = Column(String)
+   firstName = Column(String)
+   lastName = Column(String)
