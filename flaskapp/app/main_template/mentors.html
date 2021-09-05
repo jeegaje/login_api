@@ -1,0 +1,26 @@
+<html>
+
+<h1>Show Mentor</h1>
+<h2>This will show all mentor</h2>
+<table>
+    <tr>
+        <th>Email</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Action</th>
+    </tr>
+    {% for list in data %}
+    <tr>
+        <td>{{ list['email'] }}</td>
+        <td>{{ list['nama_depan'] }}</td>
+        <td>{{ list['nama_akhir'] }}</td>
+        <td>
+            <a href="/user/{{ list['akunId'] }}"><button>View</button></a>
+            <button>Update</button>
+            <button>Delete</button></td>
+    </tr>
+    {% endfor %}    
+</table>
+<br><br><a href="/"><li>Back Home</li></a>
+
+</html>

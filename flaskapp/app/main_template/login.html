@@ -1,0 +1,16 @@
+<html>
+<h1>Login</h1>
+<h2>You can login here!</h2>
+<form action="/login" method='POST'>
+    <label for="">email</label>
+    <input type="text" name='email'>
+    <label for="">password</label>
+    <input type="text" name='password'>    
+    <input type="submit" value="submit">
+</form>
+{% if post_msg %}
+<p>{{ post_msg['msg'] }}</p>
+{% endif %}
+<a href="/"><li>Back Home</li></a>
+
+</html>
