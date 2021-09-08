@@ -49,21 +49,14 @@ def api_delete_account(akun_id):
 def add_contact_us():
     return addContactUs()
 
-@api_route.route('/contact_us/view', methods=['GET'])
-@jwt_required()
-def view_contact_us():
-    token_data = get_jwt_identity()
-    if token_data['tipe_akun']!='admin':
-        return jsonify(msg='Anda bukan admin!'), 401
-    else:
-        return showContactUs()
-
 @api_route.route('/contact_us/view/<perihal>', methods=['GET'])
 @jwt_required()
 def view_contact_us_by(perihal):
     token_data = get_jwt_identity()
     if token_data['tipe_akun']!='admin':
         return jsonify(msg='Anda bukan admin!'), 401
+    elif perihal=='all':
+        return showContactUs()
     elif perihal=='kritik':
         return showContactUsBy('Kritik/Saran')
     elif perihal=='sponsorship':
