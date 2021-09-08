@@ -1,7 +1,7 @@
 # API Mongga
 
-### Route API
-1. Contact Us
+## Route API
+### 1. Contact Us ###
 
 - "http://127.0.0.1:5000/api/contact_us" POST<br>
 Menambah data contact_us<br>
