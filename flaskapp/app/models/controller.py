@@ -127,6 +127,22 @@ def showContactUs():
         contact_us_data.append(data)
     return jsonify(contact_us_data)
 
+def showContactUsBy(input_perihal):
+    database_data =  session.query(contact_us).filter(contact_us.perihal==input_perihal).all()
+    contact_us_data = []
+    for list in database_data:
+        data = {
+            "id" : list.id,
+            "perihal" : list.perihal,
+            "nama" : list.nama,
+            "email" : list.email,
+            "subjek" : list.subjek,
+            "pesan" : list.pesan,
+            "create_date" : list.create_date,
+        }
+        contact_us_data.append(data)
+    return jsonify(contact_us_data)
+
 def showUserByEmail():
     database_data =  session.query(akun).filter(akun.email=='user1@gmail.com').one()
     user_data = {
