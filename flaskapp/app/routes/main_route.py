@@ -102,3 +102,9 @@ def dashbord_user():
 @main_route.route('/dashbord/mentor')
 def dashbord_mentor():
     return render_template('dashbord_mentor.html')
+
+@main_route.route('/delete/<id>')
+def delete_account(id):
+    token = request.cookies.get('token')
+    data = requests.delete(f'http://127.0.0.1:5000/api/delete/{id}', headers={'Authorization': f'Bearer {token}'})
+    return make_response(redirect(url_for('main_route.show_user')))

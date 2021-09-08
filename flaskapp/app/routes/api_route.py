@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
+import jwt
 from ..models.controller import *
 
 api_route = Blueprint('api_route', __name__, url_prefix='/api')
@@ -31,22 +32,50 @@ def api_register_user():
 def api_register_mentor():
     token_data = get_jwt_identity()
     if token_data['tipe_akun']!='admin':
-        return jsonify(msg='Anda bukan admin!'), 403
+        return jsonify(msg='Anda bukan admin!'), 401
     else:
         return register('mentor')
 
 @api_route.route('/delete/<akun_id>', methods=['DELETE'])
 @jwt_required()
 def api_delete_account(akun_id):
-    return deleteUser(akun_id)
+    token_data = get_jwt_identity()
+    if token_data['tipe_akun']!='admin':
+        return jsonify(msg='Anda bukan admin!'), 401
+    else:
+        return deleteUser(akun_id)
 
 @api_route.route('/contact_us', methods=['POST'])
 def add_contact_us():
     return addContactUs()
 
 @api_route.route('/contact_us/view', methods=['GET'])
+@jwt_required()
 def view_contact_us():
-    return showContactUs()
+    token_data = get_jwt_identity()
+    if token_data['tipe_akun']!='admin':
+        return jsonify(msg='Anda bukan admin!'), 401
+    else:
+        return showContactUs()
+
+@api_route.route('/contact_us/view/<perihal>', methods=['GET'])
+@jwt_required()
+def view_contact_us_by(perihal):
+    token_data = get_jwt_identity()
+    if token_data['tipe_akun']!='admin':
+        return jsonify(msg='Anda bukan admin!'), 401
+    elif perihal=='kritik':
+        return showContactUsBy('Kritik/Saran')
+    elif perihal=='sponsorship':
+        return showContactUsBy('Sponsorship')            
+    elif perihal=='bisnis':
+        return showContactUsBy('Kerjasama Bisnis')
+    elif perihal=='partnering':
+        return showContactUsBy('Media Partnering')
+    elif perihal=='bantuan':
+        return showContactUsBy('Pertanyaan atau Bantuan')
+    else:
+        return jsonify(msg='route salah!'), 404
 
 @api_route.errorhandler(500)
 def internal_error(error):
