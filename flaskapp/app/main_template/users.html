@@ -15,9 +15,10 @@
         <td>{{ list['nama_depan'] }}</td>
         <td>{{ list['nama_akhir'] }}</td>
         <td>
-            <a href="/user/{{ list['akunId'] }}"><button>View</button></a>
-            <button>Update</button>
-            <button>Delete</button></td>
+            <a href="/"><button>View</button></a>
+            <a href="/"><button>Update</button></a>
+            <a href="/delete/{{ list['akun_id'] }}"><button>Delete</button></a>
+        </td>
     </tr>
     {% endfor %}    
 </table>
