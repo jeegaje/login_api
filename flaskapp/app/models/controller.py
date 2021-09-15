@@ -1,8 +1,8 @@
-from flask import jsonify, request
+from flask import json, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt_identity
 import datetime
 import uuid
-from .model import contact_us, session, akun
+from .model import contact_us, data_diri, session, akun, kelas, wishlist
 
 
 def login():
@@ -40,7 +40,7 @@ def register(tipe_akun):
     elif database_data!=None:
         return jsonify(msg='email sudah terdaftar!'), 400
     else:
-        user_data = {
+        data_akun = {
             "akun_id" : uuid.uuid4().hex,
             "email" : input_email,
             "sandi" : input_password,
@@ -49,9 +49,22 @@ def register(tipe_akun):
             "create_date" : datetime.datetime.now(),
             "tipe_akun": tipe_akun
         }
-        session.add(akun(**user_data))
+        data_diri_akun = {
+            "data_diri_id" : uuid.uuid4().hex,
+            "akun_id" : data_akun['akun_id']
+        }
+    session.add(akun(**data_akun))
+    session.commit()
+    session.add(data_diri(**data_diri_akun))
+    session.commit()
+    if tipe_akun=='user':
+        data_wishlist = {
+            "wishlist_id" : uuid.uuid4().hex,
+            "user_id" : data_akun['akun_id']
+        }
+        session.add(wishlist(**data_wishlist))
         session.commit()
-        return jsonify(msg='user berhasil dibuat!')
+    return jsonify(msg='user berhasil dibuat!')
 
 def showUser(tipe_akun):
     token_data = get_jwt_identity()
@@ -74,18 +87,104 @@ def showUser(tipe_akun):
         return jsonify(users_data)
 
 def deleteUser(input_akun_id):
-    token_data = get_jwt_identity()
-    database_data = session.query(akun).filter(akun.akun_id==input_akun_id).first()
-    if token_data['tipe_akun']!='admin':
-        return jsonify(msg='Anda bukan admin!'), 403
-    elif input_akun_id==None:
+    database_data_akun = session.query(akun).filter(akun.akun_id==input_akun_id).first()
+    database_data_datadiri = session.query(data_diri).filter(data_diri.akun_id==input_akun_id).first()
+    database_data_wishlist = session.query(wishlist).filter(wishlist.user_id==input_akun_id).first()
+    tipe_akun = database_data_akun.tipe_akun
+    if input_akun_id==None:
         return jsonify(msg='Mausukan akun_id!'), 400
-    elif database_data==None:
+    elif database_data_akun==None:
         return jsonify(msg='Akun tidak ditemukan!'), 400
+    else:
+        if tipe_akun=='user':
+            session.delete(database_data_wishlist)
+            session.commit()
+        elif tipe_akun=='mentor':
+            cek_database_data_kelas = session.query(kelas).filter(kelas.mentor_id==input_akun_id).first()
+            database_data_kelas = session.query(kelas).filter(kelas.mentor_id==input_akun_id).all()
+            if cek_database_data_kelas!=None:
+                session.delete(database_data_kelas)
+                session.commit()
+        session.delete(database_data_datadiri)
+        session.commit()
+        session.delete(database_data_akun)
+        session.commit()
+        return jsonify(msg='User berhasil dihapus!')
+
+def updateDataDiri(akun_id):
+    input_jenis_kelamin = request.json.get('jenis_kelamin')
+    input_tempat_lahir = request.json.get('tempat_lahir')
+    input_tanggal_lahir = request.json.get('tanggal_lahir')
+    input_alamat = request.json.get('alamat')
+    input_nomor_hp = request.json.get('nomor_hp')
+    database_data = session.query(akun).filter(akun.akun_id==akun_id).first()
+    if database_data==None:
+        return jsonify(msg='akun tidak ditemukan'), 400
+    else:
+        data = {
+            "jenis_kelamin" : input_jenis_kelamin,
+            "tempat_lahir" : input_tempat_lahir,
+            "tanggal_lahir" : input_tanggal_lahir,
+            "alamat" : input_alamat,
+            "nomor_hp" : input_nomor_hp,
+            "update_date" : datetime.datetime.now(),
+        }
+        session.query(data_diri).filter(data_diri.akun_id==akun_id).update(data)
+        session.commit()
+        return jsonify(msg='data diri berhasil diupdate!')
+
+def tambahKelas(mentor_id):
+    input_nama_kelas = request.json.get('nama_kelas')
+    input_harga = request.json.get('harga')
+    input_deskripsi = request.json.get('deskripsi')
+    if input_nama_kelas==None or input_harga==None or input_deskripsi==None:
+        return jsonify("Masukkan nama_kelas, harga, deskripsi!"), 400
+    elif input_nama_kelas=='' or input_harga=='' or input_deskripsi=='':
+        return jsonify("Masukkan nama_kelas, harga, deskripsi!"), 400 
+    else:
+        data = {
+            'kelas_id' : uuid.uuid4().hex,
+            'nama_kelas' : input_nama_kelas,
+            'harga' : input_harga,
+            'deskripsi' : input_deskripsi,
+            'create_date' : datetime.datetime.now(),
+            'mentor_id' : mentor_id
+        }
+        session.add(kelas(**data))
+        session.commit()
+        return jsonify(msg='Kelas berhasil ditambahkan!')
+
+def showKelas():
+    database_data = session.query(kelas).all()
+    kelas_data = []
+    for list in database_data:
+        data_mentor = session.query(akun).filter(akun.akun_id==list.mentor_id).one()
+        data = {
+            'kelas_id' : uuid.uuid4().hex,
+            'nama_kelas' : list.nama_kelas,
+            'harga' : list.harga,
+            'deskripsi' : list.deskripsi,
+            'create_date' : list.create_date,
+            'mentor' : {
+                'nama_depan' : data_mentor.nama_depan,
+                'nama_akhir' : data_mentor.nama_akhir,
+                'akun_id' : data_mentor.akun_id
+            }
+        }
+        kelas_data.append(data)
+    return jsonify(kelas_data)
+
+def hapusKelas(kelas_id):
+    database_data = session.query(kelas).filter(kelas.kelas_id==kelas_id).first()
+    if kelas_id==None:
+        return jsonify(msg='isi kelas_id!'), 400
+    elif database_data==None:
+        return jsonify(msg='Kelas tidak ditemukan!'), 400
     else:
         session.delete(database_data)
         session.commit()
-        return jsonify(msg='User berhasil dihapus!')
+        return jsonify(msg='Kelas berhasil dihapus!')
+
 
 def addContactUs():
     input_perihal = request.json.get('perihal')
@@ -152,3 +251,14 @@ def showUserByEmail():
         'lastName' : database_data.nama_akhir
     }
     return jsonify(user_data)
+
+def cekjoin():
+    database_data =  session.query(akun, data_diri).filter(akun.akun_id==data_diri.akun_id).filter(akun.akun_id=='5232e86ee268444db4e8e8a134d681ac').first()
+    kumpul=[]
+    for data1, data2 in database_data:
+        kumpul.append(data1.jenis_kelamin)
+    #    kumpul.append(data2.jenis_kelamin)
+    return f'{kumpul}'
+    #session.delete(database_data)
+    #session.commit()
+    #return 'udah'
