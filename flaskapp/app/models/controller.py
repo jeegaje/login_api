@@ -2,6 +2,8 @@ from flask import json, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt_identity
 import datetime
 import uuid
+
+from sqlalchemy.orm.session import Session
 from .model import contact_us, data_diri, session, akun, kelas, wishlist
 
 
@@ -101,10 +103,12 @@ def deleteUser(input_akun_id):
             session.commit()
         elif tipe_akun=='mentor':
             cek_database_data_kelas = session.query(kelas).filter(kelas.mentor_id==input_akun_id).first()
-            database_data_kelas = session.query(kelas).filter(kelas.mentor_id==input_akun_id).all()
             if cek_database_data_kelas!=None:
-                session.delete(database_data_kelas)
-                session.commit()
+                database_data_kelas = session.query(kelas).filter(kelas.mentor_id==input_akun_id).all()
+                for list in database_data_kelas:
+                    data_kelas = session.query(kelas).filter(kelas.mentor_id==list.mentor_id).first()
+                    session.delete(data_kelas)
+                    session.commit()
         session.delete(database_data_datadiri)
         session.commit()
         session.delete(database_data_akun)
@@ -184,7 +188,6 @@ def hapusKelas(kelas_id):
         session.delete(database_data)
         session.commit()
         return jsonify(msg='Kelas berhasil dihapus!')
-
 
 def addContactUs():
     input_perihal = request.json.get('perihal')
